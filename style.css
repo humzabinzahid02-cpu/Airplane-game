@@ -198,7 +198,8 @@ input[type=range]::-webkit-slider-thumb {
   border: none;
   box-shadow: 0 20px 50px rgba(0,0,0,0.1);
   padding: 40px 60px;
-  max-width: 420px;
+  max-width: min(92vw, 420px);
+  width: 100%;
 }
 
 .how-to-play {
@@ -207,6 +208,7 @@ input[type=range]::-webkit-slider-thumb {
   color: #253745;
   font-size: 14px;
   line-height: 1.6;
+  width: 100%;
 }
 
 .how-to-play p {
@@ -344,5 +346,33 @@ input[type=range]::-webkit-slider-thumb {
   }
   input[type=range]::-webkit-slider-thumb {
     width: 30px; height: 30px;
+  }
+
+  #start-screen {
+    padding: 24px 20px;
+    max-width: 94vw;
+  }
+
+  .game-title {
+    font-size: 32px;
+  }
+
+  .game-subtitle {
+    margin-bottom: 24px;
+  }
+
+  .how-to-play {
+    font-size: 13px;
+    margin: 16px 0;
+  }
+
+  .how-to-play ul {
+    padding-left: 14px;
+  }
+
+  .start-pulse,
+  .action-btn {
+    padding: 16px 22px;
+    font-size: 16px;
   }
 }
