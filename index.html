@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Plane Landing Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- STARTUP SCREEN CSS -->
+  <style>
+    #startup-screen-container {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #05080d;
+      font-family: 'Outfit', 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    #startup-screen-container *,
+    #startup-screen-container *::before,
+    #startup-screen-container *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Animated gradient background ── */
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: 
+        radial-gradient(ellipse 80% 60% at 50% 120%, rgba(56, 100, 220, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 20% 80%, rgba(100, 60, 200, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(30, 160, 220, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #05080d 0%, #0a0f1a 40%, #0d1220 100%);
+    }
+
+    /* ── Particle canvas ── */
+    #particles {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Ambient glow behind logo ── */
+    .ambient-glow {
+      position: absolute;
+      width: min(70vmin, 400px);
+      height: min(70vmin, 400px);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(60, 120, 255, 0.10) 0%, rgba(60, 120, 255, 0.03) 50%, transparent 70%);
+      filter: blur(40px);
+      animation: glowPulse 4s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { 
+        transform: scale(0.85);
+        opacity: 0.6;
+      }
+      50% { 
+        transform: scale(1.15);
+        opacity: 1;
+      }
+    }
+
+    /* ── Main loader container ── */
+    .loader {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      width: min(85vw, 420px);
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .loader.hidden {
+      opacity: 0;
+      transform: scale(1.05) translateY(-20px);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    /* ── Logo ── */
+    .logo-wrap {
+      position: relative;
+      opacity: 0;
+      transform: scale(0.7) translateY(20px);
+      animation: logoEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+      background: radial-gradient(circle, rgba(241, 196, 15, 0.08) 0%, transparent 75%);
+      padding: 0;
+      width: min(60vmin, 360px);
+      height: min(60vmin, 360px);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid rgba(241, 196, 15, 0.15);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(241, 196, 15, 0.05);
+    }
+
+    @keyframes logoEntrance {
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .logo {
+      width: 85%; /* Slight inner padding */
+      height: 85%;
+      filter: drop-shadow(0 0 30px rgba(241, 196, 15, 0.40));
+      animation: logoBreathe 3s ease-in-out 1.5s infinite;
+      mix-blend-mode: screen; 
+      border-radius: 50%;
+      object-fit: contain;
+    }
+
+    @keyframes logoBreathe {
+      0%, 100% {
+        transform: scale(0.96);
+        filter: drop-shadow(0 0 25px rgba(80, 140, 255, 0.15))
+               drop-shadow(0 0 50px rgba(80, 140, 255, 0.06));
+      }
+      50% {
+        transform: scale(1.04);
+        filter: drop-shadow(0 0 40px rgba(80, 140, 255, 0.25))
+               drop-shadow(0 0 80px rgba(80, 140, 255, 0.10));
+      }
+    }
+
+    /* ── Ring glow around logo ── */
+    .logo-ring {
+      position: absolute;
+      inset: -30px;
+      border-radius: 50%;
+      border: 2px solid rgba(241, 196, 15, 0.15);
+      animation: ringPulse 3s ease-in-out infinite;
+      box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.05);
+    }
+
+    .logo-ring:nth-child(2) {
+      inset: -60px;
+      border-color: rgba(241, 196, 15, 0.08);
+      animation-delay: 0.5s;
+    }
+
+    .logo-ring:nth-child(3) {
+      inset: -90px;
+      border-color: rgba(241, 196, 15, 0.03);
+      animation-delay: 1s;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.3; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    /* ── Progress bar ── */
+    .progress-area {
+      width: 100%;
+      max-width: 260px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeSlideIn 0.6s ease-out 1s forwards;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, 
+        rgba(80, 140, 255, 0.4) 0%, 
+        rgba(120, 170, 255, 0.8) 50%,
+        rgba(80, 140, 255, 0.4) 100%);
+      box-shadow: 0 0 12px rgba(100, 160, 255, 0.3),
+                  0 0 30px rgba(100, 160, 255, 0.1);
+      transition: width 0.3s ease;
+    }
+
+    .progress-glow {
+      position: absolute;
+      top: -2px;
+      right: 0;
+      width: 40px;
+      height: 6px;
+      background: radial-gradient(ellipse, rgba(120, 180, 255, 0.6) 0%, transparent 70%);
+      filter: blur(2px);
+      transition: right 0.3s ease;
+      opacity: 0;
+    }
+
+    .progress-fill.active ~ .progress-glow {
+      opacity: 1;
+    }
+
+    /* ── Loading text ── */
+    .text-area {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeSlideIn 0.6s ease-out 1.2s forwards;
+    }
+
+    .text-main {
+      font-size: clamp(11px, 2vmin, 14px);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      font-weight: 300;
+      color: rgba(200, 215, 240, 0.6);
+    }
+
+    .text-dots {
+      display: inline-block;
+      width: 24px;
+      text-align: left;
+    }
+
+    .percent {
+      font-size: clamp(10px, 1.8vmin, 12px);
+      font-weight: 200;
+      color: rgba(160, 185, 225, 0.4);
+      margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Scanline effect (very subtle) ── */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.015) 2px,
+        rgba(0, 0, 0, 0.015) 4px
+      );
+    }
+
+    /* ── Vignette ── */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 99;
+      pointer-events: none;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 50%, rgba(3, 5, 10, 0.5) 100%);
+    }
+
+    #game-container {
+      display: flex;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div id="game-container">
+
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Overlay UI -->
+    <div class="hud" id="hud">
+      <div class="hud-left">
+        <div class="stat">SCORE: <span id="score-val">0</span></div>
+        <div class="stat">STREAK: <span id="streak-val">0</span></div>
+      </div>
+      <div class="hud-center" id="message-container">
+        <!-- Messages like "PERFECT LANDING", "CRASHED" appear here -->
+        <h1 id="game-message">APPROACHING RUNWAY</h1>
+        <p id="sub-message">Adjust speed and angle to land safely</p>
+      </div>
+      <div class="hud-right">
+        <div class="stat">DIST: <span id="dist-val">--</span> m</div>
+        <div class="stat">ALT: <span id="alt-val">1000</span> m</div>
+        <div class="stat">TREND: <span id="trend-val">LEVEL</span></div>
+        <div class="stat">SPD: <span id="spd-val">250</span> kts</div>
+      </div>
+    </div>
+
+    <!-- On-Screen Controls -->
+    <div class="controls-container" id="controls">
+      <!-- Left side: Speed control -->
+      <div class="control-area left-control">
+        <div class="slider-wrapper">
+          <input type="range" id="throttle-slider" min="0" max="100" value="70" orient="vertical" class="vertical-slider">
+          <div class="slider-label">THR</div>
+        </div>
+      </div>
+      
+      <!-- Right side: Pitch control -->
+      <div class="control-area right-control">
+        <div class="slider-wrapper">
+          <input type="range" id="pitch-slider" min="-30" max="30" value="0" orient="vertical" class="vertical-slider">
+          <div class="slider-label">PITCH</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start Screen Overlay -->
+    <div class="menu-overlay active" id="start-screen">
+      <h1 class="game-title">FLIGHT<br>APPROACH</h1>
+      <p class="game-subtitle">Master the landing</p>
+      <div class="how-to-play">
+        <p>How to play:</p>
+        <ul>
+          <li>Use the left slider for throttle.</li>
+          <li>Use the right slider for pitch control.</li>
+          <li>Watch the clouds and trend meter to know if you are climbing or descending.</li>
+          <li>Keep speed steady and approach the runway smoothly.</li>
+          <li>Press START to begin your first landing.</li>
+        </ul>
+      </div>
+      <button id="start-btn" class="action-btn start-pulse">START FLIGHT</button>
+    </div>
+
+    <!-- End Game / Level Result Screen -->
+    <div class="menu-overlay" id="result-screen">
+      <h1 id="result-title">LANDING SUCCESSFUL</h1>
+      <div class="result-stats">
+        <p>Speed: <span id="res-speed">Good</span></p>
+        <p>Angle: <span id="res-angle">Perfect</span></p>
+        <p>Position: <span id="res-dist">Center</span></p>
+      </div>
+      <p class="score-added">+<span id="res-score">500</span></p>
+      <button id="next-btn" class="action-btn">NEXT APPROACH</button>
+      <button id="restart-btn" class="action-btn secondary">RESTART</button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
